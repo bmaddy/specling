@@ -1,0 +1,37 @@
+(page "index.html"
+      (:require
+       [cljs.spec.alpha :as s]
+       [clojure.test.check.generators :as gen]
+       [cljs.tools.reader :refer [read-string]]
+       [cljs.js :refer [empty-state eval js-eval eval-str] :as cljs]
+       [eval-soup.core :refer [code->results]]))
+
+(defonce clicks (cell 0))
+
+(def clicks-even? (cell= (even? clicks)))
+
+(def color (cell= (if clicks-even? "black" "red")))
+
+(def samples (cell []))
+
+(defn make-samples [code]
+  (println code)
+  (cljs/require '[cljs.spec.alpha :as s])
+  (code->results [#_"(require '[cljs.spec.alpha :as s])" code]
+                 (fn [results]
+                   (reset! samples (map gen/generate (repeat 5 (s/gen (identity (last results)))))))))
+
+(html
+ (head
+  (link :href "app.css" :rel "stylesheet" :type "text/css"))
+ (body
+  (h1 clicks)
+  (textarea :style (cell= (str "border-color:" color))
+            :keyup #(do (swap! clicks inc)
+                        (make-samples @%))
+            ;; "string?"
+            "(s/coll-of keyword?)")
+  (p (text samples))
+  (ol
+   (loop-tpl :bindings [n samples]
+             (li (cell= (str "n was " n)))))))
