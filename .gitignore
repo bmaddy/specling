@@ -4,3 +4,4 @@
 /.repl-history
 out
 .nrepl-history
+.cljs_rhino_repl
