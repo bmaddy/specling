@@ -4,7 +4,8 @@
        [clojure.test.check.generators :as gen]
        [cljs.tools.reader :refer [read-string]]
        [cljs.js :refer [empty-state eval js-eval eval-str] :as cljs]
-       [eval-soup.core :refer [code->results]]))
+       [eval-soup.core :refer [code->results]]
+       [cljs.pprint]))
 
 (defonce clicks (cell 0))
 
@@ -13,6 +14,64 @@
 (def color (cell= (if clicks-even? "black" "red")))
 
 (def samples (cell []))
+
+(comment
+  ;; (def vm (js/require "vm"))
+
+  (require '[clojure.test.check.generators :as gen])
+  (require '[clojure.string :as str])
+  (require 'cljs.pprint)
+
+  (require '[cljs.js :as cljs])
+  (require '[cljs.spec.alpha :as s])
+  (s/exercise (s/coll-of keyword?) 2)
+  (def st (cljs/empty-state))
+  (cljs/eval-str st
+                 "
+(require '[cljs.spec.alpha :as s])
+;; (s/exercise (s/coll-of keyword?) 2)
+(s/exercise keyword? 2)"
+                 nil
+                 {:eval cljs/js-eval
+                  :source-map true
+                  :context :expr}
+                 (fn [res]
+                   (println res)))
+
+  (require '[cljs.spec.alpha :as s])
+  (require '[eval-soup.core :refer [code->results]])
+
+  (code->results ["(require '[cljs.spec.alpha :as s])"
+                  "(s/exercise keyword? 2)"]
+                 (fn [results]
+                   (println {:results results})))
+
+  (code->results ["(require '[cljs.spec.alpha :as s])"
+                  "(s/exercise (s/coll-of keyword?) 2)"]
+                 (fn [results]
+                   (println {:results results})))
+
+  (code->results ["(require '[cljs.spec.alpha :as s])"
+                  "(s/exercise (s/coll-of keyword?) 2)"
+                  #_"s/exercise"]
+                 (fn [results]
+                   (println {:results results})))
+
+  ;; returns a function
+  (code->results ["(require '[cljs.spec.alpha :as s])"
+                  "(.getName *ns*)"
+                  "s/exercise"]
+                 (fn [results]
+                   (println {:results results})))
+
+  ;; Cannot read property 'call' of undefined
+  (code->results ["(require '[cljs.spec.alpha :as s])"
+                  "(.getName *ns*)"
+                  "(cljs.spec.alpha/coll-of int?)"]
+                 (fn [results]
+                   (println {:results results})))
+
+  )
 
 (defn make-samples [code]
   (println code)
