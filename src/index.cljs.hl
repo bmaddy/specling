@@ -18,9 +18,24 @@
 (comment
   ;; (def vm (js/require "vm"))
 
-  (require '[clojure.test.check.generators :as gen])
-  (require '[clojure.string :as str])
-  (require 'cljs.pprint)
+  ;; (require '[clojure.test.check.generators :as gen])
+  ;; (require '[clojure.string :as str])
+  ;; (require 'cljs.pprint)
+
+  (require '[cljs.js :as cljs])
+  (cljs/eval-str
+   (cljs/empty-state)
+   "
+(require '[cljs.spec.alpha :as s])
+;; (s/exercise (s/coll-of keyword?) 2)
+(s/exercise keyword? 2)
+"
+   'leipzig-live.playing
+   {:eval cljs/js-eval
+    :ns 'leipzig-live.playing
+    :load (fn [_ cb] (cb {:lang :clj :source ""}))}
+   (fn [res] (println res)))
+
 
   (require '[cljs.js :as cljs])
   (require '[cljs.spec.alpha :as s])
@@ -34,7 +49,8 @@
                  nil
                  {:eval cljs/js-eval
                   :source-map true
-                  :context :expr}
+                  :context :expr
+                  :load identity}
                  (fn [res]
                    (println res)))
 
